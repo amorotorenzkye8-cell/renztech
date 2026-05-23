@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paglaom Community Radio 96.5</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+        html,body{overscroll-behavior:none;touch-action:pan-y;overflow:hidden}
+        body{
+font-family:'Poppins',sans-serif;
+background:linear-gradient(135deg,#1e3c72 0%,#2a5298 50%,#1e3c72 100%);
+color:#fff;
+height:100dvh;
+display:flex;
+justify-content:center;
+align-items:center;
+overflow:hidden;
+}<div></div>
+        .app-container{
+width:100%;
+max-width:420px;
+height:100dvh;
+overflow:hidden;background:rgba(0,0,0,0.3);backdrop-filter:blur(20px);display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.5);position:relative}
+        /* NEW: Offline overlay */
+        .offline-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;text-align:center;padding:20px}
+        .offline-overlay.show{display:flex}
+        .offline-icon{font-size:60px;margin-bottom:20px}
+        .offline-text{font-size:18px;font-weight:700;margin-bottom:10px}
+        .offline-subtext{font-size:14px;color:rgba(255,255,255,0.7)}
+        .header{background:rgba(255,255,255,0.1);padding:20px 15px;display:flex;align-items:center;gap:15px;border-bottom:1px solid rgba(255,255,255,0.2)}
+        .logo{width:55px;height:55px;border-radius:15px;object-fit:contain;background:#fff;padding:5px;box-shadow:0 4px 15px rgba(0,0,0,0.3)}
+        .station-info{flex:1}
+        /* UPDATED: Plain white, walay shadow */
+        .station-name{font-size:18px;font-weight:900;letter-spacing:1px;color:#fff}
+        .tagline{font-size:11px;color:#FFD700;margin-top:3px;font-weight:600}
+        .live-badge{background:#ff4444;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        .tabs{display:flex;background:rgba(0,0,0,0.2);padding:5px;gap:5px}
+        .tab{flex:1;padding:12px 5px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,0.6);border-radius:10px;transition:all 0.3s ease}
+        .tab.active{background:rgba(255,255,255,0.2);color:#FFD700}
+        .content{flex:1;display:flex;flex-direction:column;padding:20px;overflow-y:auto}
+        .tab-content{display:none;animation:fadeIn 0.4s}
+        .tab-content.active{display:flex;flex-direction:column;align-items:center}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .visualizer{width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,0.1);border:3px solid rgba(255,215,0,0.5);display:flex;align-items:center;justify-content:center;margin:30px 0;position:relative;box-shadow:0 0 40px rgba(255,215,0,0.3)}
+        .visualizer img{width:85%;height:85%;border-radius:50%;object-fit:contain;border:5px solid #fff;background:#fff}
+        .playing.visualizer::before{content:'';position:absolute;width:100%;height:100%;border-radius:50%;border:3px solid #FFD700;animation:ripple 1.5s infinite}
+        @keyframes ripple{0%{transform:scale(1);opacity:1}100%{transform:scale(1.3);opacity:0}}
+        .now-playing{text-align:center;margin:15px 0}
+        .now-playing-label{font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:2px}
+        /* UPDATED: Plain white, walay shadow */
+        .song-title{font-size:18px;font-weight:700;margin-top:5px;color:#fff}
+        .listeners{background:rgba(0,0,0,0.4);padding:8px 20px;border-radius:25px;font-size:12px;font-weight:600;margin:10px 0;border:1px solid rgba(255,215,0,0.3)}
+        .info-card{background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border-radius:20px;padding:25px;width:100%;border:1px solid rgba(255,255,255,0.2)}
+        .info-card h2{color:#FFD700;margin-bottom:20px;text-align:center;font-size:22px}
+        .info-card p{margin-bottom:15px;font-size:14px;line-height:1.8;color:rgba(255,255,255,0.9)}
+        .info-item{display:flex;align-items:center;gap:12px;margin:15px 0;padding:12px;background:rgba(0,0,0,0.2);border-radius:12px;text-decoration:none;color:#fff;transition:all 0.3s ease}
+        .info-item:active{background:rgba(255,215,0,0.2);transform:scale(0.98)}
+        .info-icon{width:40px;height:40px;background:rgba(255,215,0,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+        .player-bar{background:rgba(0,0,0,0.4);backdrop-filter:blur(20px);padding:20px;border-top:1px solid rgba(255,255,255,0.2)}
+        ..progress-container{margin-bottom:15px}
+
+/* UPDATED: Gitago ang duration, LIVE lang makita */
+.time-display{
+display:flex;
+justify-content:space-between;
+font-size:11px;
+color:rgba(255,255,255,0.7);
+margin-bottom:8px
+}
+
+.progress-bar{
+width:100%;
+height:5px;
+background:rgba(255,255,255,0.2);
+border-radius:10px;
+overflow:hidden
+}
+
+/* UPDATED TRUE LIVE BAR */
+.progress{
+height:100%;
+background:linear-gradient(90deg,#FFD700,#FFA500);
+width:0%;
+border-radius:10px;
+transition:none
+}
+
+.controls{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:20px
+}
+
+.control-btn{
+width:50px;
+height:50px;
+border-radius:50%;
+background:rgba(255,255,255,0.1);
+border:1px solid rgba(255,255,255,0.3);
+color:#fff;
+font-size:20px;
+cursor:pointer;
+transition:all 0.3s ease;
+display:flex;
+align-items:center;
+justify-content:center
+}
+
+.control-btn:active{
+transform:scale(0.9)
+} #playBtn{width:65px;height:65px;background:linear-gradient(135deg,#FFD700,#FFA500);color:#1e3c72;font-size:26px;box-shadow:0 5px 20px rgba(255,215,0,0.4)}
+        #recordBtn.recording{background:#ff4444;animation:pulse 1s infinite}
+        .listening-circle{width:50px;height:50px;border-radius:50%;background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;color:#FFD700;line-height:1.1}
+        .listening-circle .time{font-size:10px;font-weight:700;margin-top:1px}
+        .about-text{text-align:justify}
+        .developer-info{margin-top:25px;padding-top:20px;border-top:1px solid rgba(255,215,0,0.3);text-align:center;font-size:12px;color:rgba(255,255,255,0.7)}
+        .developer-info strong{color:#FFD700}
+        
+        /* FIX EXTRA SPACE SA UBOS */
+.content{
+flex:1;
+display:flex;
+flex-direction:column;
+padding:20px;
+overflow:hidden;
+min-height:0;
+}
+
+.player-bar{
+padding:12px 15px;
+}
+
+.visualizer{
+width:240px;
+height:240px;
+margin:20px 0;
+}
+
+/* FIX ABOUT SCROLL */
+.tab-content{
+display:none;
+animation:fadeIn 0.4s;
+width:100%;
+height:100%;
+overflow-y:auto;
+padding-bottom:20px;
+}
+
+.tab-content.active{
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+/* SCROLLBAR */
+.tab-content::-webkit-scrollbar{
+width:4px;
+}
+
+.tab-content::-webkit-scrollbar-thumb{
+background:rgba(255,255,255,0.3);
+border-radius:10px;
+}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- NEW: Offline Overlay -->
+        <div class="offline-overlay" id="offlineOverlay">
+            <div class="offline-icon">📡</div>
+            <div class="offline-text">No Internet Connection</div>
+            <div class="offline-subtext">Please connect to the internet to listen to Paglaom Radio</div>
+        </div>
+
+        <div class="header">
+            <img src="logo.png" alt="Logo" class="logo" id="headerLogo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjEwMCIgZmlsbD0iI0ZGRDcwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiMwMDMzOTkiPlBBR0xBT008L3RleHQ+PC9zdmc+'">
+            <div class="station-info">
+                <div class="station-name">PAGLAOM COMMUNITY RADIO</div>
+                <div class="tagline">Your Good News Radio</div>
+            </div>
+            <div class="live-badge">● LIVE</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('home', this)">🎵 PLAYER</div>
+            <div class="tab" onclick="showTab('contact', this)">📞 CONTACT</div>
+            <div class="tab" onclick="showTab('about', this)">ℹ️ ABOUT</div>
+        </div>
+
+        <div class="content">
+            <div id="home" class="tab-content active">
+                <div class="visualizer" id="visualizer">
+                    <img src="logo.png" alt="Logo" id="mainLogo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjEwMCIgZmlsbD0iI0ZGRDcwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzIiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiMwMDMzOTkiPlBBR0xBT008L3RleHQ+PC9zdmc+'">
+                </div>
+
+                <div class="now-playing">
+                    <div class="now-playing-label">Now Playing</div>
+                    <div class="song-title" id="songTitle">Paglaom Radio Live</div>
+                </div>
+
+                <div class="listeners" id="listeners">👥 0 Listeners Online</div>
+            </div>
+
+            <div id="contact" class="tab-content">
+                <div class="info-card">
+                    <h2>Get In Touch</h2>
+                    <a href="mailto:paglaomradio@gmail.com" class="info-item">
+                        <div class="info-icon">📧</div>
+                        <div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.6)">Email</div>
+                            <div style="font-weight:600">paglaomradio@gmail.com</div>
+                        </div>
+                    </a>
+                    <a href="tel:+639123456789" class="info-item">
+                        <div class="info-icon">📱</div>
+                        <div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.6)">Phone</div>
+                            <div style="font-weight:600">+63 912 345 6789</div>
+                        </div>
+                    </a>
+                    <div class="info-item">
+                        <div class="info-icon">📍</div>
+                        <div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.6)">Location</div>
+                            <div style="font-weight:600">Cabitan, Mandaon, Masbate</div>
+                        </div>
+                    </div>
+                    <a href="https://www.facebook.com/paglaomradio" target="_blank" class="info-item">
+                        <div class="info-icon">📘</div>
+                        <div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.6)">Facebook</div>
+                            <div style="font-weight:600">facebook.com/paglaomradio</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div id="about" class="tab-content">
+                <div class="info-card">
+                    <h2>About Us</h2>
+                    <div class="about-text">
+                        <p><strong>Paglaom Community Radio 96.5 FM</strong> is a Christian community radio station from Cabitan, Mandaon, Masbate.</p>
+
+<p>We share the Gospel through inspirational music, Bible messages, and programs that bring hope and encouragement to every listener.</p>
+                    </div>
+                    <div class="developer-info">
+                       
+                        <p>Developed by <strong>Renz-kye Balatucan Amoroto</strong></p>
+                         Version 2.5</p>
+                    </div>
+                </div>
+            </div>        
+        </div>
+
+        <div class="player-bar">
+            <div class="progress-container">
+                <div class="time-display">
+                    <span id="currentTime">LIVE</span>
+<span id="duration">LIVE</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="recordBtn" onclick="toggleRecord()" title="Record">🎙️</button>
+                <button class="control-btn" id="playBtn" onclick="togglePlay()">▶</button>
+                <div class="listening-circle" id="listeningCircle">
+                    <div>⏱️</div>
+                    <div class="time" id="listeningTime">0:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATED: Gamit na imong music.mp3 -->
+    <audio 
+id="radioStream" 
+src="https://files.catbox.moe/r0shbt.mp3" 
+preload="auto" 
+crossorigin="anonymous"
+onerror="this.src='https://stream.zeno.fm/0r0xa792kwzuv'">
+</audio>
+
+    <script>
+        const audio = document.getElementById('radioStream');
+        const playBtn = document.getElementById('playBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const progress = document.getElementById('progress');
+        const listeners = document.getElementById('listeners');
+        const visualizer = document.getElementById('visualizer');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const songTitle = document.getElementById('songTitle');
+        const listeningTimeEl = document.getElementById('listeningTime');
+        const offlineOverlay = document.getElementById('offlineOverlay');
+
+        let isPlaying = false;
+        let listenerCount = Math.floor(Math.random() * 50) + 20;
+        let listeningSeconds = 0;
+        let listeningInterval = null;
+
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+
+        // NEW: Check internet connection
+        function checkConnection() {
+            if (!navigator.onLine) {
+                offlineOverlay.classList.add('show');
+                audio.pause();
+                playBtn.innerHTML = '▶';
+                isPlaying = false;
+                visualizer.classList.remove('playing');
+                clearInterval(listeningInterval);
+            } else {
+                offlineOverlay.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('online', checkConnection);
+        window.addEventListener('offline', checkConnection);
+        checkConnection(); // Check on load
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "LIVE";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function togglePlay() {
+            if (!navigator.onLine) {
+                alert('No internet connection. Please connect to listen.');
+                return;
+            }
+            
+            if (isPlaying) {
+                audio.pause();
+                playBtn.innerHTML = '▶';
+                visualizer.classList.remove('playing');
+                clearInterval(listeningInterval);
+            } else {
+                audio.play().then(() => {
+                    playBtn.innerHTML = '⏸';
+                    visualizer.classList.add('playing');
+                    startListeningTimer();
+                }).catch(err => {
+                    alert('I-tap sa ang screen, tapos pindot Play. Bawal autoplay sa phone.');
+                });
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function startListeningTimer() {
+            listeningInterval = setInterval(() => {
+                listeningSeconds++;
+                const mins = Math.floor(listeningSeconds / 60);
+                const secs = listeningSeconds % 60;
+                listeningTimeEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        async function toggleRecord() {
+            if (!navigator.onLine) {
+                alert('No internet connection. Cannot record.');
+                return;
+            }
+            
+            if (!isRecording) {
+                try {
+                    const stream = audio.captureStream ? audio.captureStream() : audio.mozCaptureStream();
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedChunks = [];
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) recordedChunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `paglaom-recording-${Date.now()}.webm`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        alert('Recording saved sa Downloads folder!');
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('recording');
+                    recordBtn.innerHTML = '⏹️';
+                } catch (err) {
+                    alert('Recording failed. Dapat naka-play ang radio before mag-record.');
+                    console.error(err);
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordBtn.innerHTML = '🎙️';
+            }
+        }
+
+        // UPDATED: Gitago ang duration, LIVE lang pirmi
+        // TRUE LIVE RADIO STYLE
+audio.addEventListener('play', () => {
+    progress.style.width = '100%';
+    currentTimeEl.textContent = 'LIVE';
+    durationEl.textContent = 'LIVE';
+});
+
+audio.addEventListener('pause', () => {
+    progress.style.width = '0%';
+    currentTimeEl.textContent = 'LIVE';
+});
+
+audio.addEventListener('ended', () => {
+    progress.style.width = '0%';
+    currentTimeEl.textContent = 'LIVE';
+});
+
+        audio.addEventListener('ended', () => {
+            playBtn.innerHTML = '▶';
+            isPlaying = false;
+            visualizer.classList.remove('playing');
+            clearInterval(listeningInterval);
+        });
+
+        audio.addEventListener('error', () => {
+            if (!navigator.onLine) {
+                offlineOverlay.classList.add('show');
+            }
+        });
+
+        function showTab(tabName, el) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function updateListeners() {
+            listenerCount += Math.floor(Math.random() * 5) - 2;
+            if(listenerCount < 15) listenerCount = 15;
+            if(listenerCount > 80) listenerCount = 80;
+            listeners.textContent = `👥 ${listenerCount} Listeners Online`;
+        }
+        setInterval(updateListeners, 4000);
+        updateListeners();
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+    </script>
+</body>
+</html>
