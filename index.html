@@ -280,11 +280,9 @@ border-radius:10px;
 
     <!-- UPDATED: Gamit na imong music.mp3 -->
     <audio 
-id="radioStream" 
-src="https://files.catbox.moe/r0shbt.mp3"
-preload="auto" 
-crossorigin="anonymous"
-onerror="this.src='https://stream.zeno.fm/0r0xa792kwzuv'">
+id="radioStream"
+preload="auto"
+crossorigin="anonymous">
 </audio>
 
     <script>
@@ -333,29 +331,147 @@ onerror="this.src='https://stream.zeno.fm/0r0xa792kwzuv'">
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
+/* RADIO START TIME */
+const stationStart =
+new Date("2026-04-24T09:45:00").getTime();
+/* PLAYLIST */
+const songs = [
 
+{
+title:"Ang tanging alay ko Lyrics",
+src:"https://files.catbox.moe/i8vs04.mp3",
+duration:334
+},
+
+{
+title:"Distraction and Focus | Stephen Prado ",
+src:"https://files.catbox.moe/qox6ml.mp3",
+duration:2255
+},
+
+{
+title:"Itatanghal by Spring Worship",
+src:"https://files.catbox.moe/9kk5vu.mp3",
+duration:388
+},
+
+{
+title:"Papuri Music",
+src:"https://files.catbox.moe/ajbuzg.mp3",
+duration:559
+},
+
+{
+title:"Sayong Yakap Official | All for Jesus Worship",
+src:"https://files.catbox.moe/s8jlt8.mp3",
+duration:379
+},
+
+{
+title:"Mananatili Still Tagalog Version",
+src:"https://files.catbox.moe/kdkusb.mp3",
+duration:227
+}
+
+];
+
+function getCurrentSong(){
+
+const now = Date.now();
+
+const elapsedSeconds =
+Math.floor((now - stationStart) / 1000);
+
+let totalDuration = songs.reduce(
+(sum, song) => sum + song.duration,
+0
+);
+
+let currentTime =
+elapsedSeconds % totalDuration;
+
+let accumulated = 0;
+
+for(let i = 0; i < songs.length; i++){
+
+accumulated += songs[i].duration;
+
+if(currentTime < accumulated){
+
+let songStart =
+accumulated - songs[i].duration;
+
+let seekTime =
+currentTime - songStart;
+
+return {
+index:i,
+seek:seekTime
+};
+
+}
+}
+}
         function togglePlay() {
-            if (!navigator.onLine) {
-                alert('No internet connection. Please connect to listen.');
-                return;
-            }
-            
-            if (isPlaying) {
-                audio.pause();
-                playBtn.innerHTML = '▶';
-                visualizer.classList.remove('playing');
-                clearInterval(listeningInterval);
-            } else {
-                audio.play().then(() => {
-                    playBtn.innerHTML = '⏸';
-                    visualizer.classList.add('playing');
-                    startListeningTimer();
-                }).catch(err => {
-                    alert('I-tap sa ang screen, tapos pindot Play. Bawal autoplay sa phone.');
-                });
-            }
-            isPlaying = !isPlaying;
-        }
+
+    if (!navigator.onLine) {
+        alert('No internet connection. Please connect to listen.');
+        return;
+    }
+
+    if (isPlaying) {
+
+        audio.pause();
+        playBtn.innerHTML = '▶';
+        visualizer.classList.remove('playing');
+        clearInterval(listeningInterval);
+
+    } else {
+
+        const current = getCurrentSong();
+
+        audio.src = songs[current.index].src;
+
+        songTitle.textContent =
+        songs[current.index].title;
+
+        audio.currentTime = current.seek;
+
+        audio.play().then(() => {
+
+            playBtn.innerHTML = '⏸';
+            visualizer.classList.add('playing');
+            startListeningTimer();
+
+        }).catch(err => {
+
+            alert('I-tap sa ang screen, tapos pindot Play.');
+
+        });
+
+    }
+
+    isPlaying = !isPlaying;
+}
+
+audio.addEventListener("ended", () => {
+
+    let current = getCurrentSong();
+
+    let nextIndex = current.index + 1;
+
+    if(nextIndex >= songs.length){
+        nextIndex = 0;
+    }
+
+    audio.src = songs[nextIndex].src;
+
+    songTitle.textContent =
+    songs[nextIndex].title;
+
+    audio.play();
+
+});
 
         function startListeningTimer() {
             listeningInterval = setInterval(() => {
@@ -420,44 +536,4 @@ audio.addEventListener('play', () => {
 audio.addEventListener('pause', () => {
     progress.style.width = '0%';
     currentTimeEl.textContent = 'LIVE';
-});
-
-audio.addEventListener('ended', () => {
-    progress.style.width = '0%';
-    currentTimeEl.textContent = 'LIVE';
-});
-
-        audio.addEventListener('ended', () => {
-            playBtn.innerHTML = '▶';
-            isPlaying = false;
-            visualizer.classList.remove('playing');
-            clearInterval(listeningInterval);
-        });
-
-        audio.addEventListener('error', () => {
-            if (!navigator.onLine) {
-                offlineOverlay.classList.add('show');
-            }
-        });
-
-        function showTab(tabName, el) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            el.classList.add('active');
-        }
-
-        function updateListeners() {
-            listenerCount += Math.floor(Math.random() * 5) - 2;
-            if(listenerCount < 15) listenerCount = 15;
-            if(listenerCount > 80) listenerCount = 80;
-            listeners.textContent = `👥 ${listenerCount} Listeners Online`;
-        }
-        setInterval(updateListeners, 4000);
-        updateListeners();
-
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('selectstart', e => e.preventDefault());
-    </script>
-</body>
-</html>
+    
